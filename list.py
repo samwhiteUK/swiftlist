@@ -6,7 +6,7 @@ def open_shopping_list():
         with open('shopping_list.json', 'r') as list_file:
             shopping_list = json.load(list_file)
     except:
-        shopping_list = {}
+        shopping_list = {"items":{}, "menu":{}}
 
     return shopping_list
 
@@ -19,7 +19,7 @@ def open_recipe_book():
     return recipe_book
 
 def create_list():
-    shopping_list = {}
+    shopping_list = {"items":{}, "menu":{}}
     with open('shopping_list.json', 'w') as list_file:
         json.dump(shopping_list, list_file)
 
@@ -28,19 +28,19 @@ def add_to_list(item, quantity=None):
     if quantity is None:
         quantity = 1
     try:
-        shopping_list[item] = quantity + shopping_list[item]
+        shopping_list["items"][item] = quantity + shopping_list["items"][item]
     except:
-        shopping_list[item] = quantity
+        shopping_list["items"][item] = quantity
     with open('shopping_list.json', 'w+') as list_file:
         json.dump(shopping_list, list_file)
 
 def remove_from_list(item, quantity=None):
     shopping_list = open_shopping_list()
     try:
-        if (quantity is None) or (quantity > shopping_list[item]):
-            del shopping_list[item]
+        if (quantity is None) or (quantity > shopping_list["items"][item]):
+            del shopping_list["items"][item]
         else:
-            shopping_list[item] = shopping_list.get(item) - quantity
+            shopping_list["items"][item] = shopping_list["items"][item] - quantity
     except:
         return
     with open('shopping_list.json', 'w+') as shopping_list_json:
@@ -73,23 +73,33 @@ def add_recipe_to_list(name):
     recipe_book = open_recipe_book()
     if recipe_book == {}:
         return
-    shopping_list_new = {key : shopping_list.get(key, 0) + recipe_book[name].get(key,0) 
-            for key in set(shopping_list) | set(recipe_book[name])}
+    shopping_list["items"] = {key : shopping_list["items"].get(key, 0) + recipe_book[name].get(key,0) 
+        for key in set(shopping_list["items"]) | set(recipe_book[name])}
+    try:
+        shopping_list["menu"][name] = shopping_list["menu"][name] + 1 
+    except:
+        shopping_list["menu"][name] = 1 
     with open('shopping_list.json', 'w+') as shopping_list_json:
-        json.dump(shopping_list_new, shopping_list_json)
+        json.dump(shopping_list, shopping_list_json)
 
 def remove_recipe_from_list(name):
     shopping_list = open_shopping_list()
     recipe_book = open_recipe_book()
     if recipe_book == {}:
         return
-    shopping_list_new = {key : shopping_list.get(key, 0) - recipe_book[name].get(key,0) 
-            for key in set(shopping_list) | set(recipe_book[name])}
-    for key in set(shopping_list_new):
-        if shopping_list_new[key] < 1:
-            del shopping_list_new[key]
+    try:
+        shopping_list["menu"][name] = shopping_list["menu"][name] - 1 
+        shopping_list["items"] = {key : shopping_list["items"].get(key, 0) - recipe_book[name].get(key,0) 
+                for key in set(shopping_list["items"]) | set(recipe_book[name])}
+    except:
+        return
+    for key in set(shopping_list["items"]):
+        if shopping_list["items"][key] < 1:
+            del shopping_list[key]
+    if shopping_list["menu"][name] == 0:
+        del shopping_list["menu"][item]
     with open('shopping_list.json', 'w+') as shopping_list_json:
-        json.dump(shopping_list_new, shopping_list_json)
+        json.dump(shopping_list, shopping_list_json)
     
 
 def delete_recipe(name):
