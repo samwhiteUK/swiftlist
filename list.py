@@ -27,9 +27,25 @@ def add_to_list(item, quantity=None):
     shopping_list = open_shopping_list()
     if quantity is None:
         quantity = 1
-    shopping_list[item] = int(quantity)
+    try:
+        shopping_list[item] = quantity + shopping_list[item]
+    except:
+        shopping_list[item] = quantity
     with open('shopping_list.json', 'w+') as list_file:
         json.dump(shopping_list, list_file)
+
+def remove_from_list(item, quantity=None):
+    shopping_list = open_shopping_list()
+    try:
+        if (quantity is None) or (quantity > shopping_list[item]):
+            del shopping_list[item]
+        else:
+            shopping_list[item] = shopping_list.get(item) - quantity
+    except:
+        return
+    with open('shopping_list.json', 'w+') as shopping_list_json:
+        json.dump(shopping_list, shopping_list_json)
+
 
 def create_recipe(name):
     recipe_book = open_recipe_book()
@@ -40,12 +56,10 @@ def create_recipe(name):
             break
         else:
             try:
-                quantity = int(input("How many? "))
+                quantity = input("How many? ")
             except:
                 quantity = 1
-            print(quantity)
-            print(type(quantity))
-            new_recipe[ingredient] = quantity
+            new_recipe[ingredient] = int(quantity)
 
     print(new_recipe)
     recipe_book[name] = new_recipe
@@ -64,6 +78,20 @@ def add_recipe_to_list(name):
     with open('shopping_list.json', 'w+') as shopping_list_json:
         json.dump(shopping_list_new, shopping_list_json)
 
+def remove_recipe_from_list(name):
+    shopping_list = open_shopping_list()
+    recipe_book = open_recipe_book()
+    if recipe_book == {}:
+        return
+    shopping_list_new = {key : shopping_list.get(key, 0) - recipe_book[name].get(key,0) 
+            for key in set(shopping_list) | set(recipe_book[name])}
+    for key in set(shopping_list_new):
+        if shopping_list_new[key] < 1:
+            del shopping_list_new[key]
+    with open('shopping_list.json', 'w+') as shopping_list_json:
+        json.dump(shopping_list_new, shopping_list_json)
+    
+
 def delete_recipe(name):
     recipe_book = open_recipe_book()
     try:
@@ -74,14 +102,37 @@ def delete_recipe(name):
         json.dump(recipe_book, recipe_book_json)
 
 
+#create a new list
 if sys.argv[1] == "clear":
     create_list()
+
+#add to list, optionally with a quantity
 elif sys.argv[1] == "add":
-    add_to_list(sys.argv[3], sys.argv[2])
+    if len(sys.argv) > 3:
+        add_to_list(sys.argv[3], int(sys.argv[2]))
+    else:
+        add_to_list(sys.argv[2])
+
+#remove from list, optionally with a quantity
+elif sys.argv[1] == "remove":
+    if len(sys.argv) > 3:
+        remove_from_list(sys.argv[3], int(sys.argv[2]))
+    else:
+        remove_from_list(sys.argv[2])
+
+#add a recipe to the list
 elif sys.argv[1] == "add-recipe":
     add_recipe_to_list(sys.argv[2])
+
+#remove a recipe from the list
+elif sys.argv[1] == "remove-recipe":
+    remove_recipe_from_list(sys.argv[2])
+
+#create a new recipe
 elif sys.argv[1] == "create-recipe":
     create_recipe(sys.argv[2])
+
+#delete a recipe
 elif sys.argv[1] == "delete-recipe":
     delete_recipe(sys.argv[2])
 
