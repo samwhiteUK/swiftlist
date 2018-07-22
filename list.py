@@ -145,12 +145,7 @@ def print_ingredients(recipe):
 def print_list():
     shopping_list = open_shopping_list();
     for item in set(shopping_list["items"]):
-        print(item)
-
-     
-    
-
-
+        print(shopping_list["items"].get(item), item)
 
 #create a new list
 if sys.argv[1] == "clear":
