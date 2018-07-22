@@ -1,5 +1,8 @@
 import sys
 import json
+import datetime
+from evernote.api.client import EvernoteClient
+from evernote.edam.type import ttypes
 
 def open_shopping_list():
     try:
@@ -55,9 +58,8 @@ def create_recipe(name):
         if ingredient == "":
             break
         else:
-            try:
-                quantity = input("How many? ")
-            except:
+            quantity = input("How many? ")
+            if quantity == '':
                 quantity = 1
             new_recipe[ingredient] = int(quantity)
 
@@ -111,6 +113,44 @@ def delete_recipe(name):
     with open('recipe_book.json', 'w+') as recipe_book_json:
         json.dump(recipe_book, recipe_book_json)
 
+def upload_shopping_list():
+    shopping_list = open_shopping_list()
+    dev_token = "S=s1:U=94a8d:E=16b12ef7476:C=163bb3e4778:P=1cd:A=en-devtoken:V=2:H=597dbf9724fbc184e2d5b1eced891761"
+    client = EvernoteClient(token=dev_token)
+    userStore = client.get_user_store()
+    noteStore = client.get_note_store()
+    note = ttypes.Note()
+    note.title = 'Shopping list ' + str(datetime.date.today())
+    body = '<?xml version="1.0" encoding="UTF-8"?>'
+    body+='<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
+    body+='<en-note>'
+    for item in set(shopping_list["items"]):
+        body+='<div><en-todo/> %d %s</div>' % (shopping_list["items"][item], item)
+    body+='</en-note>'
+
+    note.content = body
+    noteToUpload = noteStore.createNote(dev_token, note)
+
+def read_recipe_book():
+    recipe_book = open_recipe_book()
+    for recipe in set(recipe_book):
+        print(recipe)
+
+def print_ingredients(recipe):
+    recipe_book = open_recipe_book()
+    for ingredient in set(recipe_book[recipe]):
+        print(recipe_book[recipe][ingredient], end=' ')
+        print(ingredient)
+
+def print_list():
+    shopping_list = open_shopping_list();
+    for item in set(shopping_list["items"]):
+        print(item)
+
+     
+    
+
+
 
 #create a new list
 if sys.argv[1] == "clear":
@@ -145,4 +185,22 @@ elif sys.argv[1] == "create-recipe":
 #delete a recipe
 elif sys.argv[1] == "delete-recipe":
     delete_recipe(sys.argv[2])
+
+elif sys.argv[1] == "upload":
+    upload_shopping_list()
+
+elif sys.argv[1] == "recipes":
+    read_recipe_book()
+
+elif sys.argv[1] == "ingredients":
+    print_ingredients(sys.argv[2])
+
+elif sys.argv[1] == "list":
+    print_list()
+
+
+
+elif sys.argc > 1:
+    print("Unknown argument {}".format(sys.argv[1]))
+
 
